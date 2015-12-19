@@ -48,7 +48,7 @@ try:
 except ImportError:
   from StringIO import StringIO
 
-from bsddb import hashopen as dbmopen
+from anydbm import open as dbmopen
 
 #from threading import Thread
 

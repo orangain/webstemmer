@@ -29,7 +29,7 @@
 import sys, time, struct, os
 stderr = sys.stderr
 
-from bsddb import hashopen as dbmopen
+from anydbm import open as dbmopen
 
 # reorganize db
 def reorgdb(outname, fname, threshold, verbose):
