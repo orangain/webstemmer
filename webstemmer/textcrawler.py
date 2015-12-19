@@ -168,7 +168,7 @@ class SimpleCrawler:
             print >>stderr, 'Making connection: %r...' % (self.hostport,)
             self.conn = self.conn_class(self.hostport)
           self.conn.request('GET', req.get_selector().replace(' ',''), '', headers)
-	  self.conn.sock.settimeout(self.timeout)
+          self.conn.sock.settimeout(self.timeout)
           resp = self.conn.getresponse()
           break
         except BadStatusLine, x:
