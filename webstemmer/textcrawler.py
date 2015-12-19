@@ -31,7 +31,7 @@
 import sys, re, time, socket
 from webstemmer.htmlparser3 import HTMLParser3, HTMLHandler
 from webstemmer.zipdb import ACLDB, ZipDumper, NullDumper
-from httplib import HTTPConnection, BadStatusLine
+from httplib import HTTPConnection, HTTPSConnection, BadStatusLine
 from robotparser import RobotFileParser
 from gzip import GzipFile
 from cookielib import MozillaCookieJar
@@ -99,7 +99,11 @@ class SimpleCrawler:
                cookie_file=None, acldb=None, urldb=None, default_charset=None,
                delay=0, timeout=300, debug=0):
     (proto, self.hostport, _x, _y, _z) = urlsplit(starturl)
-    assert proto == 'http'
+    assert proto in ('http', 'https')
+    if proto == 'http':
+      self.conn_class = HTTPConnection
+    else:
+      self.conn_class = HTTPSConnection
     #Thread.__init__(self)
     self.debug = debug
     self.index_html = index_html
@@ -162,7 +166,7 @@ class SimpleCrawler:
         try:
           if not self.conn:
             print >>stderr, 'Making connection: %r...' % (self.hostport,)
-            self.conn = HTTPConnection(self.hostport)
+            self.conn = self.conn_class(self.hostport)
           self.conn.request('GET', req.get_selector().replace(' ',''), '', headers)
 	  self.conn.sock.settimeout(self.timeout)
           resp = self.conn.getresponse()
@@ -313,6 +317,8 @@ class HTMLLinkFinder(HTMLHandler):
       s = ''.join(self.anchor_text)
       if s and self.anchor_href.startswith('http://'):
         self.reftxtdb.add(self.anchor_href[6:], s)
+      elif s and self.anchor_href.startswith('https://'):
+        self.reftxtdb.add(self.anchor_href[7:], s)
     self.anchor_href = None
     self.anchor_text = []
     return
@@ -370,6 +376,11 @@ class TextCrawler(SimpleCrawler):
       url = urljoin(handler.base_href, url)
       if url.startswith('http://'):
         name = self.baseid+url[6:]
+        self.consumer.feed_page(name, body)
+        if self.debug:
+          print >>stderr, 'FEED: %r' % name
+      elif url.startswith('https://'):
+        name = self.baseid+url[7:]
         self.consumer.feed_page(name, body)
         if self.debug:
           print >>stderr, 'FEED: %r' % name
